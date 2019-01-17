@@ -14,10 +14,10 @@ use super::Review;
 fn render_template(content: &str, context: Context) -> Result<String> {
     let mut tera = Tera::default();
     tera.add_raw_template("hello.html", content).unwrap();
-    tera.register_function("get_number", &|_: &HashMap<String, Value>| Ok(Value::Number(10.into())));
-    tera.register_function("get_string", &|_: &HashMap<String, Value>| {
+    tera.register_function("get_number", Box::new(|_: &HashMap<String, Value>| Ok(Value::Number(10.into()))));
+    tera.register_function("get_string", Box::new(|_: &HashMap<String, Value>| {
         Ok(Value::String("Hello".to_string()))
-    });
+    }));
 
     tera.render("hello.html", context)
 }
@@ -678,7 +678,7 @@ fn stateful_global_fn() {
     )
     .unwrap();
 
-    tera.register_function("get_next", &next);
+    tera.register_function("get_next", Box::new(next));
 
     assert_eq!(
         tera.render("fn.html", Context::new()).unwrap(),
@@ -712,7 +712,7 @@ fn nonstatic_global_fn() {
     )
     .unwrap();
 
-    tera.register_function("get_page", &get_page);
+    tera.register_function("get_page", Box::new(get_page));
 
     let result = tera.render("fn.html", Context::new()).unwrap();
 

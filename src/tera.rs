@@ -33,7 +33,7 @@ pub struct Tera<'tera> {
     #[doc(hidden)]
     pub testers: HashMap<String, Arc<dyn Test>>,
     #[doc(hidden)]
-    pub functions: HashMap<String, &'tera dyn Function>,
+    pub functions: HashMap<String, Arc<dyn Function + 'tera>>,
     // Which extensions does Tera automatically autoescape on.
     // Defaults to [".html", ".htm", ".xml"]
     #[doc(hidden)]
@@ -43,7 +43,7 @@ pub struct Tera<'tera> {
 }
 
 impl<'tera> Tera<'tera> {
-    fn create(dir: &str, parse_only: bool) -> Result<Tera> {
+    fn create(dir: &str, parse_only: bool) -> Result<Self> {
         if dir.find('*').is_none() {
             return Err(Error::msg(format!(
                 "Tera expects a glob as input, no * were found in `{}`",
@@ -85,7 +85,7 @@ impl<'tera> Tera<'tera> {
     ///    }
     ///}
     ///```
-    pub fn new(dir: &str) -> Result<Tera> {
+    pub fn new(dir: &str) -> Result<Self> {
         Self::create(dir, false)
     }
 
@@ -105,7 +105,7 @@ impl<'tera> Tera<'tera> {
     ///};
     ///tera.build_inheritance_chains()?;
     ///```
-    pub fn parse(dir: &str) -> Result<Tera> {
+    pub fn parse(dir: &str) -> Result<Self> {
         Self::create(dir, true)
     }
 
@@ -524,7 +524,7 @@ impl<'tera> Tera<'tera> {
     /// ```rust,ignore
     /// tera.register_function("range", range);
     /// ```
-    pub fn register_function(&mut self, name: &str, function: &'tera dyn Function) {
+    pub fn register_function(&mut self, name: &str, function: Arc<dyn Function + 'tera>) {
         self.functions.insert(name.to_string(), function);
     }
 
@@ -583,9 +583,9 @@ impl<'tera> Tera<'tera> {
     }
 
     fn register_tera_functions(&mut self) {
-        self.register_function("range", &functions::range);
-        self.register_function("now", &functions::now);
-        self.register_function("throw", &functions::throw);
+        self.register_function("range", Arc::new(functions::range));
+        self.register_function("now", Arc::new(functions::now));
+        self.register_function("throw", Arc::new(functions::throw));
     }
 
     /// Select which suffix(es) to automatically do HTML escaping on,

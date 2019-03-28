@@ -610,11 +610,15 @@ impl<'a> Processor<'a> {
                     MathOperator::Div => {
                         let ll = l.as_f64().unwrap();
                         let rr = r.as_f64().unwrap();
-                        let res = ll / rr;
-                        if res.is_nan() {
-                            None
+                        if rr != 0.0 {
+                            let res = ll / rr;
+                            if res.is_nan() {
+                                None
+                            } else {
+                                Some(Number::from_f64(res).unwrap())
+                            }
                         } else {
-                            Some(Number::from_f64(res).unwrap())
+                            None
                         }
                     }
                     MathOperator::Add => {
@@ -651,7 +655,11 @@ impl<'a> Processor<'a> {
                         if l.is_i64() && r.is_i64() {
                             let ll = l.as_i64().unwrap();
                             let rr = r.as_i64().unwrap();
-                            Some(Number::from(ll % rr))
+                            if rr != 0 {
+                                Some(Number::from(ll % rr))
+                            } else {
+                                None
+                            }
                         } else if l.is_u64() && r.is_u64() {
                             let ll = l.as_u64().unwrap();
                             let rr = r.as_u64().unwrap();
@@ -659,7 +667,7 @@ impl<'a> Processor<'a> {
                         } else {
                             let ll = l.as_f64().unwrap();
                             let rr = r.as_f64().unwrap();
-                            Some(Number::from_f64(ll % rr).unwrap())
+                            Number::from_f64(ll % rr)
                         }
                     }
                 }
@@ -681,7 +689,7 @@ impl<'a> Processor<'a> {
             }
             ExprVal::String(ref val) => bail!("Tried to do math with a string: `{}`", val),
             ExprVal::Bool(val) => bail!("Tried to do math with a boolean: `{}`", val),
-            _ => unreachable!("unimplemented math expression for {:?}", expr),
+            _ => bail!("unimplemented math expression for {:?}", expr),
         };
 
         Ok(result)
